@@ -1,0 +1,74 @@
+module Main
+
+include "runtime/unsafe/wasmi32"
+include "bytes"
+include "./grainboy"
+
+@unsafe @externalName("GRAINBOY_INPUT")
+provide let input = Grainboy.input
+
+@unsafe
+let mut i = 0n
+@unsafe
+let mut playerX = 210n
+@unsafe
+let mut playerY = 100n
+
+@unsafe
+provide let run = () => {
+  from WasmI32 use { (+), (-), (*), (/), remS as (%) }
+  let mut y = 4n
+  Grainboy.text(8n, y, L, 0xffffffffn, "Welcome to Grainboy!")
+  y += 16n
+
+  Grainboy.text(8n, y, M, 0xffffffffn, "You can draw shapes:")
+  y += 16n
+  Grainboy.rect(8n, y, 16n, 16n, 0xffff00ffn)
+  Grainboy.circ(32n, y, 16n, 0xff00ffffn)
+  y += 32n
+
+  Grainboy.text(8n, y, M, 0xffffffffn, "You can draw sprites:")
+  y += 16n
+  Grainboy.sprite(8n, y, 16n, 16n, i / 10n % 9n * 16n, 0n)
+  Grainboy.sprite(32n, y, 16n, 16n, i / 10n % 9n * 16n, 16n)
+  y += 32n
+
+  Grainboy.text(8n, y, M, 0xffffffffn, "You can draw text:")
+  y += 16n
+  Grainboy.text(8n, y, S, 0xffffffffn, "small")
+  Grainboy.text(33n, y, M, 0xffffffffn, " / medium")
+  Grainboy.text(79n, y, L, 0xffffffffn, " / large")
+  y += 8n
+
+  Grainboy.text(i % 256n, i % 144n, M, 0xffffffffn, "hello, world!")
+
+  y = 4n
+  Grainboy.rect(180n, 0n, 76n, 144n, 0x222222ffn)
+  Grainboy.text(184n, y, M, 0xffffffffn, "What's next?")
+  y += 12n
+  Grainboy.text(184n, y, S, 0xffffffffn, "- Fix blending issues")
+  y += 8n
+  Grainboy.text(184n, y, S, 0xffffffffn, "- Run on web")
+  y += 8n
+  Grainboy.text(184n, y, S, 0xffffffffn, "- Demo games")
+  y += 8n
+  Grainboy.text(184n, y, S, 0xffffffffn, "- mouse/touch")
+  y += 8n
+
+  let gamepad = Grainboy.gamepad(0n)
+  if (gamepad.up == Pressed) {
+    playerY -= 1n
+  }
+  if (gamepad.down == Pressed) {
+    playerY += 1n
+  }
+  if (gamepad.left == Pressed) {
+    playerX -= 1n
+  }
+  if (gamepad.right == Pressed) {
+    playerX += 1n
+  }
+  Grainboy.rect(playerX, playerY, 16n, 16n, 0xffffffffn)
+
+  i += 1n
+}

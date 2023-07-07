@@ -1,0 +1,147 @@
+module Grainboy
+
+include "runtime/unsafe/wasmi32"
+include "runtime/unsafe/conv"
+include "bytes"
+
+// textPtr, textLen
+foreign wasm log: (WasmI32, WasmI32) -> Void from "grainboy"
+
+// x, y, font, color, textPtr, textLen
+foreign wasm draw_text: (
+  WasmI32,
+  WasmI32,
+  WasmI32,
+  WasmI32,
+  WasmI32,
+  WasmI32,
+) -> Void from "grainboy"
+
+// x, y, width, height, fill
+foreign wasm draw_rect: (
+  WasmI32,
+  WasmI32,
+  WasmI32,
+  WasmI32,
+  WasmI32,
+) -> Void from "grainboy"
+
+// x, y, diameter, fill
+foreign wasm draw_circ: (
+  WasmI32,
+  WasmI32,
+  WasmI32,
+  WasmI32,
+) -> Void from "grainboy"
+
+// x, y, width, height, sx, sy
+foreign wasm draw_sprite: (
+  WasmI32,
+  WasmI32,
+  WasmI32,
+  WasmI32,
+  WasmI32,
+  WasmI32,
+) -> Void from "grainboy"
+
+let inputBytes = Bytes.make(28 * 4) // gamepad size * num gamepads
+
+@unsafe
+provide let input = {
+  from WasmI32 use { (+) }
+  WasmI32.fromGrain(inputBytes) + 8n
+}
+
+provide enum InputState {
+  Released,
+  JustPressed,
+  Pressed,
+  JustReleased,
+}
+
+provide record Gamepad {
+  up: InputState,
+  down: InputState,
+  left: InputState,
+  right: InputState,
+  a: InputState,
+  b: InputState,
+  x: InputState,
+  y: InputState,
+  start: InputState,
+  select: InputState,
+}
+
+@unsafe
+let u8ToInputState = n => {
+  match (n) {
+    0x0us => Released,
+    0x1us => JustPressed,
+    0x2us => Pressed,
+    0x3us => JustReleased,
+    _ => Released,
+  }
+}
+
+@unsafe
+provide let gamepad = player => {
+  // from Numbers use { coerceNumberToWasmI32 }
+  from WasmI32 use { (*) }
+  let i = Conv.wasmI32ToNumber(player * 10n)
+  {
+    up: u8ToInputState(Bytes.getUint8(i, inputBytes)),
+    down: u8ToInputState(Bytes.getUint8(i + 1, inputBytes)),
+    left: u8ToInputState(Bytes.getUint8(i + 2, inputBytes)),
+    right: u8ToInputState(Bytes.getUint8(i + 3, inputBytes)),
+    a: u8ToInputState(Bytes.getUint8(i + 4, inputBytes)),
+    b: u8ToInputState(Bytes.getUint8(i + 5, inputBytes)),
+    x: u8ToInputState(Bytes.getUint8(i + 6, inputBytes)),
+    y: u8ToInputState(Bytes.getUint8(i + 7, inputBytes)),
+    start: u8ToInputState(Bytes.getUint8(i + 8, inputBytes)),
+    select: u8ToInputState(Bytes.getUint8(i + 9, inputBytes)),
+  }
+}
+
+provide enum Font {
+  S,
+  M,
+  L,
+}
+
+@unsafe
+provide let print = (text: String) => {
+  from WasmI32 use { (+) }
+  let ptr = WasmI32.fromGrain(text)
+  let textLen = WasmI32.load(ptr, 4n)
+  let textPtr = ptr + 8n
+  log(textPtr, textLen)
+}
+
+@unsafe
+provide let text = (x, y, font, color, text: String) => {
+  from WasmI32 use { (+) }
+  let n = match (font) {
+    S => 0n,
+    M => 1n,
+    L => 2n,
+  }
+  let ptr = WasmI32.fromGrain(text)
+  let textLen = WasmI32.load(ptr, 4n)
+  let textPtr = ptr + 8n
+  draw_text(x, y, n, color, textPtr, textLen)
+}
+
+@unsafe
+provide let rect = (x, y, width, height, color) => {
+  draw_rect(x, y, width, height, color)
+}
+
+@unsafe
+provide let circ = (x, y, diameter, color) => {
+  draw_circ(x, y, diameter, color)
+}
+
+@unsafe
+provide let sprite = (x, y, width, height, sx, sy) => {
+  draw_sprite(x, y, width, height, sx, sy)
+}
