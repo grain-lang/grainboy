@@ -36,6 +36,18 @@ pub async fn run() {
     let mut gpu = gpu::GPUContext::new(window).await;
     let mut renderer = gpu::Renderer::new(&gpu);
     let mut app: Option<wasm::App> = None;
+    #[cfg(not(target_arch = "wasm32"))]
+    for arg in std::env::args() {
+        if arg.ends_with(".wasm") {
+            match wasm::App::from_file(&arg) {
+                Err(err) => eprintln!("Error creating cart from file: {:?}", err),
+                Ok(next_app) => {
+                    let _ = app.insert(next_app);
+                }
+            }
+        }
+    }
+
     let mut tick = 0;
     let mut user_input = input::UserInput::new();
     event_loop.run(move |event, _, control_flow| match event {

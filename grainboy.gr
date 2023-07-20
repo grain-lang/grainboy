@@ -85,7 +85,6 @@ let u8ToInputState = n => {
 
 @unsafe
 provide let gamepad = player => {
-  // from Numbers use { coerceNumberToWasmI32 }
   from WasmI32 use { (*) }
   let i = Conv.wasmI32ToNumber(player * 10n)
   {
