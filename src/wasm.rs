@@ -21,7 +21,7 @@ pub struct App {
 #[allow(unused)]
 impl App {
     pub fn from_binary(bin: &[u8]) -> Result<Self> {
-        let engine: wasmtime::Engine = wasmtime::Engine::default();
+        let engine: wasmtime::Engine = create_engine();
         let mut store = wasmtime::Store::new(&engine, HostState::new());
         let module = wasmtime::Module::from_binary(store.engine(), bin)?;
         let instance = create_runtime(&mut store, module)?;
@@ -40,7 +40,7 @@ impl App {
         })
     }
     pub fn from_file(file: &str) -> Result<Self> {
-        let engine: wasmtime::Engine = wasmtime::Engine::default();
+        let engine: wasmtime::Engine = create_engine();
         let mut store = wasmtime::Store::new(&engine, HostState::new());
         let module = wasmtime::Module::from_file(store.engine(), file)?;
         let instance = create_runtime(&mut store, module)?;
@@ -92,6 +92,14 @@ impl App {
     pub fn clear_vertex_data(&mut self) {
         self.store.data_mut().quads.clear();
     }
+}
+
+#[allow(unused)]
+fn create_engine() -> wasmtime::Engine {
+    let mut config: wasmtime::Config = wasmtime::Config::new();
+    config.wasm_tail_call(true);
+    let engine: wasmtime::Engine = wasmtime::Engine::new(&config).unwrap();
+    engine
 }
 
 #[allow(unused)]

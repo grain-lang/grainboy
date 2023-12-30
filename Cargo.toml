@@ -21,7 +21,7 @@ wgpu = "0.16.0"
 winit = "0.28.5"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-wasmtime = "9.0.4"
+wasmtime = "15.0.1"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wgpu = { version = "0.16", features = ["webgl"] }
